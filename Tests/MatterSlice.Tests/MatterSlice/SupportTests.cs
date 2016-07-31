@@ -35,8 +35,8 @@ using System.Collections.Generic;
 namespace MatterHackers.MatterSlice.Tests
 {
 	using System;
-	using Polygon = List<IntPoint>;
-	using Polygons = List<List<IntPoint>>;
+	using Polygon = List<MSClipperLib.IntPoint>;
+	using Polygons = List<List<MSClipperLib.IntPoint>>;
 
 	[TestFixture, Category("MatterSlice.SupportTests")]
 	public class SupportTests

@@ -33,7 +33,7 @@ using System.Collections.Generic;
 
 namespace MatterHackers.MatterSlice.Tests
 {
-    using Polygons = List<List<IntPoint>>;
+    using Polygons = List<List<MSClipperLib.IntPoint>>;
 
     [TestFixture, Category("MatterSlice")]
     public class CreateToAndBottomTests
