@@ -33,8 +33,9 @@ using MSClipperLib;
 
 namespace MatterHackers.MatterSlice.Tests
 {
-	using Polygon = List<ClipperLib.IntPoint>;
-	using Polygons = List<List<ClipperLib.IntPoint>>;
+	using System;
+	using Polygon = List<IntPoint>;
+	using Polygons = List<List<IntPoint>>;
 
 	[TestFixture, Category("MatterSlice")]
 	public class SliceSettingsTests
@@ -257,6 +258,53 @@ namespace MatterHackers.MatterSlice.Tests
 		}
 
 		[Test]
+		public void EachLayersHeigherThanLast()
+		{
+			CheckLayersIncrement("cone", "spiralCone.gcode");
+		}
+
+		private static void CheckLayersIncrement(string stlFile, string gcodeFile)
+		{
+			string risingLayersStlFile = TestUtlities.GetStlPath(stlFile);
+			string risingLayersGCodeFileName = TestUtlities.GetTempGCodePath(gcodeFile);
+
+			ConfigSettings config = new ConfigSettings();
+			config.FirstLayerThickness = .2;
+			config.CenterObjectInXy = false;
+			config.LayerThickness = .2;
+			fffProcessor processor = new fffProcessor(config);
+			processor.SetTargetFile(risingLayersGCodeFileName);
+			processor.LoadStlFile(risingLayersStlFile);
+			// slice and save it
+			processor.DoProcessing();
+			processor.finalize();
+
+			string[] risingLayersGCodeContent = TestUtlities.LoadGCodeFile(risingLayersGCodeFileName);
+
+			// test .1 layer height
+			int layerCount = TestUtlities.CountLayers(risingLayersGCodeContent);
+			Assert.IsTrue(layerCount == 50);
+
+			MovementInfo startingPosition = new MovementInfo();
+			for (int i = 0; i < layerCount; i++)
+			{
+				string[] layerInfo = TestUtlities.GetGCodeForLayer(risingLayersGCodeContent, i);
+
+				// check that all layers move up 
+				foreach (MovementInfo movement in TestUtlities.Movements(layerInfo, startingPosition))
+				{
+					if (i > 0)
+					{
+						Assert.IsTrue(movement.position.z >= startingPosition.position.z);
+					}
+
+					// always go up
+					startingPosition.position = new Vector3(0, 0, Math.Max(startingPosition.position.z, movement.position.z));
+				}
+			}
+		}
+
+		[Test]
 		public void CorrectNumberOfLayersForLayerHeights()
 		{
 			// test .1 layer height
@@ -394,7 +442,7 @@ namespace MatterHackers.MatterSlice.Tests
 				{
 					string[] layerGCode = TestUtlities.GetGCodeForLayer(gcodeContents, i);
 					MovementInfo lastMovement = new MovementInfo();
-					foreach (MovementInfo movement in TestUtlities.Movements(layerGCode))
+					foreach (MovementInfo movement in TestUtlities.Movements(layerGCode, onlyG1s: true))
 					{
 						if (!firstPosition)
 						{

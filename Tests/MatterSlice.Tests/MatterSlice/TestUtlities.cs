@@ -160,16 +160,24 @@ namespace MatterHackers.MatterSlice.Tests
 			return false;
 		}
 
-		public static IEnumerable<MovementInfo> Movements(string[] gcodeContents)
+		public static IEnumerable<MovementInfo> Movements(string[] gcodeContents, Nullable<MovementInfo> startingMovement = null, bool onlyG1s = false)
 		{
 			MovementInfo currentPosition = new MovementInfo();
+			if(startingMovement != null)
+			{
+				currentPosition = startingMovement.Value;
+			}
 			foreach (string line in gcodeContents)
 			{
-				if (line.StartsWith("G1 "))
+				if ((!onlyG1s && line.StartsWith("G0 "))
+					|| line.StartsWith("G1 "))
 				{
 					GetFirstNumberAfter("X", line, ref currentPosition.position.x);
 					GetFirstNumberAfter("Y", line, ref currentPosition.position.y);
-					GetFirstNumberAfter("Z", line, ref currentPosition.position.z);
+					if(GetFirstNumberAfter("Z", line, ref currentPosition.position.z))
+					{
+						int a = 0;
+					}
 					GetFirstNumberAfter("E", line, ref currentPosition.extrusion);
 					GetFirstNumberAfter("F", line, ref currentPosition.feedRate);
 
