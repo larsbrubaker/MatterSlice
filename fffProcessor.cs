@@ -490,6 +490,10 @@ namespace MatterHackers.MatterSlice
 
 				gcode.setZ(z);
 
+				// Now move up to the next layer so we don't start the extrusion one layer too low.
+				gcodeLayer.QueueTravel(new IntPoint(gcodeLayer.LastPosition.X, gcodeLayer.LastPosition.Y, z));
+
+
 				// We only create the skirt if we are on layer 0.
 				if (layerIndex == 0 && !config.ShouldGenerateRaft())
 				{
@@ -576,9 +580,6 @@ namespace MatterHackers.MatterSlice
 						{
 							int bestPoint = PathOrderOptimizer.GetBestIndex(island.InsetToolPaths[0][0], config.ExtrusionWidth_um);
 							gcodeLayer.SetOuterPerimetersToAvoidCrossing(island.AvoidCrossingBoundary);
-							gcodeLayer.QueueTravel(island.InsetToolPaths[0][0][bestPoint]);
-							// Now move up to the next layer so we don't start the extrusion one layer too low.
-							gcode.setZ(z + config.LayerThickness_um);
 							gcodeLayer.QueueTravel(island.InsetToolPaths[0][0][bestPoint]);
 						}
 					}

@@ -295,6 +295,7 @@ namespace MatterHackers.MatterSlice.Tests
 				{
 					if (i > 0)
 					{
+						Assert.AreEqual(movement.position.z, .2 + i * .2, .001);
 						Assert.IsTrue(movement.position.z >= startingPosition.position.z);
 					}
 

@@ -55,9 +55,13 @@ namespace MatterHackers.MatterSlice
 		private double unretractExtrusionExtra_mm;
 		private double unretractExtraOnExtruderSwitch_mm;
 		private bool wipeAfterRetraction;
-		private long zPos_um;
 
-		public long CurrentZ { get { return zPos_um; } } 
+		private long currentZ;
+		public long CurrentZ
+		{
+			get { return currentZ; }
+			set { currentZ = value; }
+		} 
 
 		public GCodeExport()
 		{
@@ -196,7 +200,7 @@ namespace MatterHackers.MatterSlice
 
 		public void setZ(long z)
 		{
-			this.zPos_um = z;
+			this.CurrentZ = z;
 		}
 
 		public void SwitchExtruder(int newExtruder)
