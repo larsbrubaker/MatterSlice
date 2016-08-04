@@ -167,14 +167,21 @@ namespace MatterHackers.MatterSlice.Tests
 			{
 				currentPosition = startingMovement.Value;
 			}
-			foreach (string line in gcodeContents)
+			foreach (string inLine in gcodeContents)
 			{
+				string line = inLine;
+				// make sure we don't parse comments
+				if (line.Contains(";"))
+				{
+					line = line.Split(';')[0];
+				}
+
 				if ((!onlyG1s && line.StartsWith("G0 "))
 					|| line.StartsWith("G1 "))
 				{
 					GetFirstNumberAfter("X", line, ref currentPosition.position.x);
 					GetFirstNumberAfter("Y", line, ref currentPosition.position.y);
-					if(GetFirstNumberAfter("Z", line, ref currentPosition.position.z))
+					if (GetFirstNumberAfter("Z", line, ref currentPosition.position.z))
 					{
 						int a = 0;
 					}

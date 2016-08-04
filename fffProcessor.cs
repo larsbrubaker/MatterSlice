@@ -840,27 +840,17 @@ namespace MatterHackers.MatterSlice
 			}
 
 			// Find the thin lines for this layer and add them to the queue
-			if (false) // this code is just for test. LBB
+			if (true) // this code is just for test. LBB
 			{
 				Polygons fillPolygons = new Polygons();
 				foreach (var island in layer.Islands)
 				{
-					List<IntPoint> path = new List<IntPoint>();
+					Polygons path = island.IslandOutline.Offset(-extrusionWidth_um * 1);
 					Polygons thinLines;
-					foreach (var outline in island.IslandOutline.Offset(-extrusionWidth_um * 1))
-					{
-						foreach (var point in outline)
-						{
-							path.Add(new IntPoint(point));
-						}
-					}
 
 					if (layerGcodePlanner.FindThinLines(path, extrusionWidth_um - 2, out thinLines))
 					{
-						foreach (var widthPath in thinLines)
-						{
-							fillPolygons.Add(widthPath);
-						}
+						fillPolygons.AddAll(thinLines);
 					}
 				}
 				layerGcodePlanner.QueuePolygonsByOptimizer(fillPolygons, fillConfig);

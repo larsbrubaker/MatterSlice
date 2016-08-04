@@ -138,9 +138,9 @@ namespace MatterHackers.MatterSlice.Tests
 		{
 			CheckSpiralCone("cone", "spiralCone.gcode");
 
-			CheckSpiralCylinder("Cylinder50Sides", "Cylinder50Sides.gcode");
+			CheckSpiralCone("Cylinder50Sides", "Cylinder50Sides.gcode");
 
-			CheckSpiralCylinder("Cylinder2Wall50Sides", "Cylinder2Wall50Sides.gcode");
+			CheckSpiralCone("Cylinder2Wall50Sides", "Cylinder2Wall50Sides.gcode");
 		}
 
 		private static void CheckSpiralCone(string stlFile, string gcodeFile)
@@ -165,94 +165,40 @@ namespace MatterHackers.MatterSlice.Tests
 
 			// test .1 layer height
 			int layerCount = TestUtlities.CountLayers(cylinderGCodeContent);
-			Assert.IsTrue(layerCount == 50);
+			Assert.IsTrue(layerCount == 50 || layerCount == 100);
 
-			for (int i = 2; i < layerCount - 3; i++)
+			MovementInfo lastMovement = new MovementInfo();
+			for (int i = 0; i < layerCount; i++)
 			{
 				string[] layerInfo = TestUtlities.GetGCodeForLayer(cylinderGCodeContent, i);
 
+				double radiusForLayer = 1;
+				bool firstPosition = true;
 				// check that all layers move up continuously
-				MovementInfo lastMovement = new MovementInfo();
-				foreach (MovementInfo movement in TestUtlities.Movements(layerInfo))
+				foreach (MovementInfo movement in TestUtlities.Movements(layerInfo, lastMovement))
 				{
-					Assert.IsTrue(movement.position.z > lastMovement.position.z);
-
-					lastMovement = movement;
-				}
-
-				double radiusForLayer = 5.0 + (20.0 - 5.0) / layerCount * i;
-
-				bool first = true;
-				lastMovement = new MovementInfo();
-				// check that all moves are on the outside of the cylinder (not crossing to a new point)
-				foreach (MovementInfo movement in TestUtlities.Movements(layerInfo))
-				{
-					if (!first)
+					if (i > 1)
 					{
-						Assert.IsTrue((movement.position - lastMovement.position).Length < 2);
-
 						Vector3 xyOnly = new Vector3(movement.position.x, movement.position.y, 0);
-						Assert.AreEqual(radiusForLayer, xyOnly.Length, .3);
+
+						if (firstPosition)
+						{
+							radiusForLayer = xyOnly.Length;
+							Assert.IsTrue(movement.position.z == lastMovement.position.z);
+							firstPosition = false;
+						}
+						else
+						{
+							Assert.IsTrue(movement.position.z > lastMovement.position.z);
+
+							// check that all moves are on the outside of the cylinder (not crossing to a new point)
+							Assert.IsTrue((movement.position - lastMovement.position).Length < 2);
+
+							Assert.AreEqual(radiusForLayer, xyOnly.Length, .4);
+						}
 					}
 
 					lastMovement = movement;
-					first = false;
-				}
-			}
-		}
-
-		private static void CheckSpiralCylinder(string stlFile, string gcodeFile)
-		{
-			string cylinderStlFile = TestUtlities.GetStlPath(stlFile);
-			string cylinderGCodeFileName = TestUtlities.GetTempGCodePath(gcodeFile);
-
-			ConfigSettings config = new ConfigSettings();
-			config.FirstLayerThickness = .2;
-			config.CenterObjectInXy = false;
-			config.LayerThickness = .2;
-			config.NumberOfBottomLayers = 0;
-			config.ContinuousSpiralOuterPerimeter = true;
-			fffProcessor processor = new fffProcessor(config);
-			processor.SetTargetFile(cylinderGCodeFileName);
-			processor.LoadStlFile(cylinderStlFile);
-			// slice and save it
-			processor.DoProcessing();
-			processor.finalize();
-
-			string[] cylinderGCodeContent = TestUtlities.LoadGCodeFile(cylinderGCodeFileName);
-
-			// test .1 layer height
-			int layerCount = TestUtlities.CountLayers(cylinderGCodeContent);
-			Assert.IsTrue(layerCount == 100);
-
-			for (int i = 2; i < layerCount - 3; i++)
-			{
-				string[] layerInfo = TestUtlities.GetGCodeForLayer(cylinderGCodeContent, i);
-
-				// check that all layers move up continuously
-				MovementInfo lastMovement = new MovementInfo();
-				foreach (MovementInfo movement in TestUtlities.Movements(layerInfo))
-				{
-					Assert.IsTrue(movement.position.z > lastMovement.position.z);
-
-					lastMovement = movement;
-				}
-
-				bool first = true;
-				lastMovement = new MovementInfo();
-				// check that all moves are on the outside of the cylinder (not crossing to a new point)
-				foreach (MovementInfo movement in TestUtlities.Movements(layerInfo))
-				{
-					if (!first)
-					{
-						Assert.IsTrue((movement.position - lastMovement.position).Length < 2);
-
-						Vector3 xyOnly = new Vector3(movement.position.x, movement.position.y, 0);
-						Assert.AreEqual(9.8, xyOnly.Length, .3);
-					}
-
-					lastMovement = movement;
-					first = false;
 				}
 			}
 		}
