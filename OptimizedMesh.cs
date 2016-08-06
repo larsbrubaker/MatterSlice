@@ -243,7 +243,6 @@ namespace MatterHackers.MatterSlice
 
 		public void saveDebugSTL(string filename)
 		{
-#if true
 			OptimizedMesh vol = OptimizedMeshes[0];
 
 			using (StreamWriter stream = new StreamWriter(filename))
@@ -274,38 +273,6 @@ namespace MatterHackers.MatterSlice
 					f.Write((short)0);
 				}
 			}
-#else
-    char buffer[80] = "MatterSlice_STL_export";
-    int n;
-    uint16_t s;
-    float flt;
-    OptimizedVolume* vol = &volumes[0];
-    FILE* f = fopen(filename, "wb");
-    fwrite(buffer, 80, 1, f);
-    n = vol.faces.Count;
-    fwrite(&n, sizeof(n), 1, f);
-    for(int i=0;i<vol.faces.Count;i++)
-    {
-        flt = 0;
-        s = 0;
-        fwrite(&flt, sizeof(flt), 1, f);
-        fwrite(&flt, sizeof(flt), 1, f);
-        fwrite(&flt, sizeof(flt), 1, f);
-
-        flt = vol.points[vol.faces[i].index[0]].p.x / 1000.0; fwrite(&flt, sizeof(flt), 1, f);
-        flt = vol.points[vol.faces[i].index[0]].p.y / 1000.0; fwrite(&flt, sizeof(flt), 1, f);
-        flt = vol.points[vol.faces[i].index[0]].p.z / 1000.0; fwrite(&flt, sizeof(flt), 1, f);
-        flt = vol.points[vol.faces[i].index[1]].p.x / 1000.0; fwrite(&flt, sizeof(flt), 1, f);
-        flt = vol.points[vol.faces[i].index[1]].p.y / 1000.0; fwrite(&flt, sizeof(flt), 1, f);
-        flt = vol.points[vol.faces[i].index[1]].p.z / 1000.0; fwrite(&flt, sizeof(flt), 1, f);
-        flt = vol.points[vol.faces[i].index[2]].p.x / 1000.0; fwrite(&flt, sizeof(flt), 1, f);
-        flt = vol.points[vol.faces[i].index[2]].p.y / 1000.0; fwrite(&flt, sizeof(flt), 1, f);
-        flt = vol.points[vol.faces[i].index[2]].p.z / 1000.0; fwrite(&flt, sizeof(flt), 1, f);
-
-        fwrite(&s, sizeof(s), 1, f);
-    }
-    fclose(f);
-#endif
 		}
 	}
 }
