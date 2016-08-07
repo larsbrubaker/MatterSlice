@@ -110,7 +110,7 @@ namespace MatterHackers.MatterSlice
 			IntPoint direction = (end2D - start2D);
 			long length = direction.Length();
 			long lengthSquared = length * length;
-			IntPoint rightDirection = direction.GetPerpendicularRight();
+			IntPoint rightDirection = direction.GetPerpendicularRightXy();
 			long maxDistanceNormalized = maxDistance * length;
 
 			// for every vertex
