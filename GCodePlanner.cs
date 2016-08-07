@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 using System;
-using ClipperLib;
+using MSClipperLib;
 using System.Collections.Generic;
 
 namespace MatterHackers.MatterSlice
