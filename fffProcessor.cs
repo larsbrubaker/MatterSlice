@@ -1043,12 +1043,24 @@ namespace MatterHackers.MatterSlice
 				{
 					if (supportOutlines.Count > 0)
 					{
-						// don't write the bottoms that are sitting on supported areas (they will be written at air gap distance later).
-						Polygons polygonsToWriteAsLines = PolygonsHelper.ConvertToLines(polygonsToWrite);
-
-						Polygons polygonsNotOnSupport = polygonsToWriteAsLines.CreateLineDifference(supportOutlines);
 						fillConfig.closedLoop = false;
-						gcodeLayer.QueuePolygonsByOptimizer(polygonsNotOnSupport, fillConfig);
+						Polygons polysToWriteAtNormalHeight = new Polygons();
+
+						Polygons polygonsToWriteAsLines = PolygonsHelper.ConvertToLines(polygonsToWrite);
+						foreach(Polygon poly in polygonsToWriteAsLines)
+						{
+							Polygons polygonsIntersectSupport = supportOutlines.CreateLineIntersections(new Polygons() { poly });
+							// write the bottoms that are not sitting on supported areas
+							if (polygonsIntersectSupport.Count == 0)
+							{
+								polysToWriteAtNormalHeight.Add(poly);
+							}
+						}
+
+						if (polysToWriteAtNormalHeight.Count > 0)
+						{
+							gcodeLayer.QueuePolygonsByOptimizer(polysToWriteAtNormalHeight, fillConfig);
+						}
 					}
 					else
 					{
@@ -1059,18 +1071,23 @@ namespace MatterHackers.MatterSlice
 				{
 					if (supportOutlines.Count > 0)
 					{
-						if (supportOutlines.Count > 0)
-						{
-							// write the bottoms that are sitting on supported areas.
-							Polygons polygonsToWriteAsLines = PolygonsHelper.ConvertToLines(polygonsToWrite);
+						fillConfig.closedLoop = false;
+						Polygons polysToWriteAtAirGapHeight = new Polygons();
 
-							Polygons polygonsOnSupport = supportOutlines.CreateLineIntersections(polygonsToWriteAsLines);
-							fillConfig.closedLoop = false;
-							gcodeLayer.QueuePolygonsByOptimizer(polygonsOnSupport, fillConfig);
-						}
-						else
+						Polygons polygonsToWriteAsLines = PolygonsHelper.ConvertToLines(polygonsToWrite);
+						foreach (Polygon poly in polygonsToWriteAsLines)
 						{
-							gcodeLayer.QueuePolygonsByOptimizer(polygonsToWrite, fillConfig);
+							Polygons polygonsIntersectSupport = supportOutlines.CreateLineIntersections(new Polygons() { poly });
+							// write the bottoms that are not sitting on supported areas
+							if (polygonsIntersectSupport.Count > 0)
+							{
+								polysToWriteAtAirGapHeight.Add(poly);
+							}
+						}
+
+						if (polysToWriteAtAirGapHeight.Count > 0)
+						{
+							gcodeLayer.QueuePolygonsByOptimizer(polysToWriteAtAirGapHeight, fillConfig);
 						}
 					}
 				}
