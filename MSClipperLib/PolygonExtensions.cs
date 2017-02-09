@@ -62,24 +62,6 @@ namespace MSClipperLib
 			return degrees * degToRad;
 		}
 
-		/// <summary>
-		/// This will find the largest turn in a given models. It preffers concave turns to convex turns.
-		/// </summary>
-		/// <param name="inputPolygon"></param>
-		/// <param name="lineWidth"></param>
-		/// <returns></returns>
-		public static int FindGreatestTurnIndex(this Polygon inputPolygon, long lineWidth = 3)
-		{
-			// code to make the seam go to the back most position
-			//return inputPolygon.LargestTurnIndex(new IntPoint(0, 50000000));
-
-			// code to go to a specific position (would have to have it come from setting)
-			//return inputPolygon.LargestTurnIndex(config.SeamPosition);
-
-			IntPoint bestPosition = inputPolygon.FindGreatestTurnPosition(lineWidth);
-			return inputPolygon.FindClosestPositionIndex(bestPosition);
-		}
-
 		public static int FindClosestPositionIndex(this Polygon polygon, IntPoint position)
 		{
 			int bestPointIndex = -1;
@@ -103,8 +85,10 @@ namespace MSClipperLib
 		/// </summary>
 		/// <param name="inputPolygon"></param>
 		/// <param name="considerAsSameY">Range to treat y positions as the same value.</param>
+		/// <param name="convexHintPosition">When moving ccw try to match this postion if possible.</param>
+		/// <param name="concaveHintPostion">When moving cw try to match this postion if possible.</param>
 		/// <returns></returns>
-		public static IntPoint FindGreatestTurnPosition(this Polygon inputPolygon, long considerAsSameY)
+		public static IntPoint FindGreatestTurn(this Polygon inputPolygon, long considerAsSameY, IntPoint? convexHintPosition, IntPoint? concaveHintPostion)
 		{
 			IntPoint currentFurthestBackActual = new IntPoint(long.MaxValue, long.MinValue);
 			{
@@ -195,7 +179,14 @@ namespace MSClipperLib
 			{
 				if (negativeGroup.Count > 0)
 				{
-					positionToReturn = currentPolygon[negativeGroup.BestIndex];
+					if(concaveHintPostion == null)
+					{
+						positionToReturn = currentPolygon[negativeGroup.BestIndex];
+					}
+					else
+					{
+						positionToReturn = currentPolygon[negativeGroup.ClosestsIndex(concaveHintPostion.Value)];
+					}
 				}
 				else if (positiveGroup.Count > 0)
 				{
@@ -211,7 +202,14 @@ namespace MSClipperLib
 			{
 				if (negativeGroup.Count > 0)
 				{
-					positionToReturn = currentPolygon[negativeGroup.BestIndex];
+					if (concaveHintPostion == null)
+					{
+						positionToReturn = currentPolygon[negativeGroup.BestIndex];
+					}
+					else
+					{
+						positionToReturn = currentPolygon[negativeGroup.ClosestsIndex(concaveHintPostion.Value)];
+					}
 				}
 				else if (positiveGroup.Count > 0)
 				{
@@ -230,6 +228,24 @@ namespace MSClipperLib
 			}
 
 			return positionToReturn;
+		}
+
+		/// <summary>
+		/// This will find the largest turn in a given models. It preffers concave turns to convex turns.
+		/// </summary>
+		/// <param name="inputPolygon"></param>
+		/// <param name="lineWidth"></param>
+		/// <returns></returns>
+		public static int FindGreatestTurnIndex(this Polygon inputPolygon, long lineWidth = 3, IntPoint? convexHintPosition = null, IntPoint? concaveHintPostion = null)
+		{
+			// code to make the seam go to the back most position
+			//return inputPolygon.FindGreatestTurn(new IntPoint(0, 50000000));
+
+			// code to go to a specific position (would have to have it come from setting)
+			//return inputPolygon.FindGreatestTurn(config.SeamPosition);
+
+			IntPoint bestPosition = inputPolygon.FindGreatestTurn(lineWidth, convexHintPosition, concaveHintPostion);
+			return inputPolygon.FindClosestPositionIndex(bestPosition);
 		}
 
 		public static IntRect GetBounds(this Polygon inPolygon)
@@ -347,7 +363,29 @@ namespace MSClipperLib
 				}
 			}
 
-			internal void ConditionalAdd(CandidatePoint point)
+			/// <summary>
+			/// Find the candidate that is closest to the given position
+			/// </summary>
+			/// <param name="position"></param>
+			/// <returns></returns>
+			public int ClosestsIndex(IntPoint position)
+			{
+				int bestCandidateIndex = -1;
+				double closestDist = double.MaxValue;
+				for (int candidateIndex = 0; candidateIndex < Count; candidateIndex++)
+				{
+					double dist = (this[candidateIndex].position - position).LengthSquared();
+					if (dist < closestDist)
+					{
+						bestCandidateIndex = candidateIndex;
+						closestDist = dist;
+					}
+				}
+
+				return bestCandidateIndex;
+			}
+
+			public void ConditionalAdd(CandidatePoint point)
 			{
 				// If this is better than our worst point
 				// or it is within sameTurn of our best point

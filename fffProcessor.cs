@@ -709,7 +709,7 @@ namespace MatterHackers.MatterSlice
 					islandOrderOptimizer.AddPolygon(layer.Islands[partIndex].InsetToolPaths[0][0]);
 				}
 			}
-			islandOrderOptimizer.Optimize();
+			islandOrderOptimizer.Optimize(null, layerGcodePlanner.LastPosition);
 
 			List<Polygons> bottomFillIslandPolygons = new List<Polygons>();
 
@@ -809,7 +809,7 @@ namespace MatterHackers.MatterSlice
 									if (!config.ContinuousSpiralOuterPerimeter
 										&& insetIndex == island.InsetToolPaths.Count - 1)
 									{
-										var closestInsetStart = FindBestPoint(insetsForThisIsland[0], layerGcodePlanner.LastPosition);
+										var closestInsetStart = FindGreatestTurn(insetsForThisIsland[0], layerGcodePlanner.LastPosition);
 										if(closestInsetStart.X != long.MinValue)
 										{
 											layerGcodePlanner.QueueTravel(closestInsetStart);
@@ -933,17 +933,17 @@ namespace MatterHackers.MatterSlice
 			}
 		}
 
-		public IntPoint FindBestPoint(Polygons boundaryPolygons, IntPoint position)
+		public IntPoint FindGreatestTurn(Polygons boundaryPolygons, IntPoint lastPosition)
 		{
 			IntPoint polyPointPosition = new IntPoint(long.MinValue, long.MinValue);
 
 			long bestDist = long.MaxValue;
 			for (int polygonIndex = 0; polygonIndex < boundaryPolygons.Count; polygonIndex++)
 			{
-				IntPoint closestToPoly = boundaryPolygons[polygonIndex].FindGreatestTurnPosition(config.ExtrusionWidth_um);
+				IntPoint closestToPoly = boundaryPolygons[polygonIndex].FindGreatestTurn(config.ExtrusionWidth_um, null, lastPosition);
 				if (closestToPoly != null)
 				{
-					long length = (closestToPoly - position).Length();
+					long length = (closestToPoly - lastPosition).Length();
 					if (length < bestDist)
 					{
 						bestDist = length;
@@ -1043,7 +1043,7 @@ namespace MatterHackers.MatterSlice
 						islandOrderOptimizer.AddPolygon(layer.Islands[islandIndex].InsetToolPaths[0][0]);
 					}
 				}
-				islandOrderOptimizer.Optimize();
+				islandOrderOptimizer.Optimize(null, layerGcodePlanner.LastPosition);
 
 				for (int islandOrderIndex = 0; islandOrderIndex < islandOrderOptimizer.bestIslandOrderIndex.Count; islandOrderIndex++)
 				{

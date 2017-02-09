@@ -357,7 +357,7 @@ namespace MatterHackers.MatterSlice
 			PathOrderOptimizer orderOptimizer = new PathOrderOptimizer(LastPosition);
 			orderOptimizer.AddPolygons(polygons);
 
-			orderOptimizer.Optimize(config);
+			orderOptimizer.Optimize(config, LastPosition);
 
 			for (int i = 0; i < orderOptimizer.bestIslandOrderIndex.Count; i++)
 			{
